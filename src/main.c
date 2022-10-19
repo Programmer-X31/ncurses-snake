@@ -10,7 +10,7 @@ void draw()
 {
 	while(gameRunning)
 	{
-		usleep(50000);
+		usleep(75000);
 		s_update();
 		refresh();
 	}
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 	curs_set(0);
 	timeout(1);
 	getmaxyx(curscr, h, w);
-
+	f_pickLoc();
 	s_init(w, h);
 	draw();
 

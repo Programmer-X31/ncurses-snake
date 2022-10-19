@@ -7,6 +7,7 @@ struct pos {
 	int y;
 };
 
+
 static int t_width = 100;
 static int t_height = 20;
 static bool gameRunning = true;
@@ -19,6 +20,6 @@ void s_eat(int x, int y);
 void s_update();
 
 void f_pickLoc();
-
+struct pos f_getLoc();
 
 #endif

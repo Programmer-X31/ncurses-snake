@@ -25,7 +25,7 @@ static struct pos s_head = {10, 5};
 static struct pos s_last;
 
 static struct pos *s_tail;
-static int s_size = 50;
+static int s_size = 1;
 
 static int s_xoff, s_yoff;
 static char ch, s_mode = 'r';
@@ -63,10 +63,6 @@ void s_grow()
 	s_size++;
 	s_tail = realloc(s_tail, sizeof(struct pos) * s_size);
 }
-
-void s_changePos()
-{
-	}
 
 void s_update()
 {
@@ -136,6 +132,11 @@ void s_update()
 			else {
 				gameRunning = false;
 			}
+		}
+		struct pos food_loc = f_getLoc();
+		if(s_head.x == food_loc.x && s_head.y == food_loc.y) {
+			s_grow();
+			f_pickLoc();
 		}
 	} else {
 		clear();

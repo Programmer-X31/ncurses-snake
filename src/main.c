@@ -5,14 +5,16 @@
 #include <unistd.h>
 #include <locale.h>
 
+
 void draw()
 {
-	while(1)
+	while(gameRunning)
 	{
 		usleep(50000);
 		s_update();
 		refresh();
 	}
+
 }
 
 int main(int argc, char *argv[])

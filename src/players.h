@@ -8,6 +8,8 @@ struct pos {
 };
 
 
+static int score = 0;
+static struct pos f_pos;
 static int t_width = 100;
 static int t_height = 20;
 static bool gameRunning = true;

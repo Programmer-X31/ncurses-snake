@@ -35,7 +35,7 @@ bool includes(struct pos val, struct pos arr[], int len) {
     int i;
     for(i = 0; i < len-2; i++){
 		if(arr[i].x == val.x && arr[i].y == val.y)
-				return true;
+			return true;
     }
     return false;
 }
@@ -45,11 +45,12 @@ void s_init(int width, int height)
 	s_tail = calloc(s_size, sizeof(struct pos));
 	t_width = width;
 	t_height = height;
-	setlocale(LC_ALL, "");
 	
 	s_setDir(1, 0);
 	s_mode = 'r';
 	s_update();
+
+	mvprintw(1, 3, "Score: %d", score);
 }
 
 void s_setDir(int xoff, int yoff)
@@ -68,8 +69,10 @@ void s_update()
 {
 	if(gameRunning) {
 		mvaddch(s_last.y, s_last.x, ' ');
-		for(int i = 0; i < s_size; i++)
+		for(int i = 0; i < s_size; i++) {
+			attron(COLOR_PAIR(2));
 			mvprintw(s_tail[i].y, s_tail[i].x, "█");
+		}
 
 		ch = getch();
 
@@ -136,6 +139,8 @@ void s_update()
 		struct pos food_loc = f_getLoc();
 		if(s_head.x == food_loc.x && s_head.y == food_loc.y) {
 			s_grow();
+			++score;
+			mvprintw(1, 3, "Score: %d", score);
 			f_pickLoc();
 		}
 	} else {

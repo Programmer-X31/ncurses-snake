@@ -4,6 +4,8 @@
 #include <locale.h>
 #include "players.h"
 
+
+
 void f_pickLoc()
 {
 	time_t t1;

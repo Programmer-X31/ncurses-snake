@@ -23,6 +23,7 @@
 
 static struct pos s_head = {10, 5};
 static struct pos s_last;
+static struct pos food_loc;
 
 static struct pos *s_tail;
 static int s_size = 1;
@@ -136,7 +137,7 @@ void s_update()
 				gameRunning = false;
 			}
 		}
-		struct pos food_loc = f_getLoc();
+		food_loc = f_getLoc();
 		if(s_head.x == food_loc.x && s_head.y == food_loc.y) {
 			s_grow();
 			++score;

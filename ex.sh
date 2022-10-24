@@ -5,8 +5,8 @@ gcc -c src/main.c -o bin/obj/main.o
 echo "Compiling food.c into objectfile..."
 gcc -c src/food.c -o bin/obj/food.o
 echo "Linking Objectfiles"
-gcc -lncursesw -Wall -std=c99 -lm bin/obj/main.o bin/obj/snake.o bin/obj/food.o -o bin/main
+gcc -lncursesw -Wall -std=c99 -lm bin/obj/main.o bin/obj/snake.o bin/obj/food.o -o bin/snake-game
 
 
 echo "Executing ..."
-bin/main
+bin/snake-game

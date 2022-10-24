@@ -8,13 +8,13 @@ struct pos {
 };
 
 
-static int score = 0;
-static struct pos f_pos;
-static int t_width = 100;
-static int t_height = 20;
-static bool gameRunning = true;
+extern int score; // snake.c
+extern struct pos f_pos; // food.c
+extern int t_width; // main.c
+extern int t_height; // main.c
+extern bool gameRunning; // main.c
 
-void s_init(int width, int height);
+void s_init();
 void s_setLimits(int width, int height);
 void s_changePos();
 void s_setDir(int x, int y);

@@ -23,7 +23,6 @@
 
 static struct pos s_head = {10, 5};
 static struct pos s_last;
-static struct pos food_loc;
 
 static struct pos *s_tail;
 static int s_size = 1;
@@ -31,6 +30,7 @@ static int s_size = 1;
 static int s_xoff, s_yoff;
 static char ch, s_mode = 'r';
 
+int score;
 
 bool includes(struct pos val, struct pos arr[], int len) {
     int i;
@@ -41,12 +41,9 @@ bool includes(struct pos val, struct pos arr[], int len) {
     return false;
 }
 
-void s_init(int width, int height)
+void s_init()
 {
 	s_tail = calloc(s_size, sizeof(struct pos));
-	t_width = width;
-	t_height = height;
-	
 	s_setDir(1, 0);
 	s_mode = 'r';
 	s_update();
@@ -107,15 +104,17 @@ void s_update()
 				}
 				break;
 			case 'x':
-				endwin();
-				exit(0);
+				gameRunning = false;
 				break;
 		}
+
+		// Movement Code
 		s_last = s_tail[0];
+
 		for(int i = 0; i < s_size - 1; i++)
 			s_tail[i] = s_tail[i + 1];
-
 		s_tail[s_size - 1] = s_head;
+
 
 		int x = s_head.x + s_xoff;
 		int y = s_head.y + s_yoff;
@@ -137,22 +136,14 @@ void s_update()
 				gameRunning = false;
 			}
 		}
-		food_loc = f_getLoc();
-		if(s_head.x == food_loc.x && s_head.y == food_loc.y) {
+
+		if(s_head.x == f_pos.x && s_head.y == f_pos.y) {
 			s_grow();
 			++score;
 			mvprintw(1, 3, "Score: %d", score);
 			f_pickLoc();
 		}
-	} else {
-		clear();
-		mvprintw(t_height/2, t_width/2-4, " Game Over ");
-		mvprintw(t_height/2 + 1, t_width/2-9, "Press Any Key to Exit");
-		timeout(-1);
-		getch();
-		endwin();
-		exit(0);
-	}
+	} 
 }
 
 

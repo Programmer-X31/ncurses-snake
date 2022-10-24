@@ -4,7 +4,7 @@
 #include <locale.h>
 #include "players.h"
 
-
+struct pos f_pos;
 
 void f_pickLoc()
 {
@@ -16,7 +16,3 @@ void f_pickLoc()
 	mvprintw(f_pos.y, f_pos.x,  "█");
 }
 
-struct pos f_getLoc()
-{
-	return f_pos;
-}

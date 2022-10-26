@@ -20,6 +20,7 @@ void s_changePos();
 void s_setDir(int x, int y);
 void s_eat(int x, int y);
 void s_update();
+void s_endgame();
 
 void f_pickLoc();
 struct pos f_getLoc();

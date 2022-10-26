@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <locale.h>
 
-
 int t_width;
 int t_height;
 bool gameRunning;
@@ -27,19 +26,18 @@ void draw()
 		s_update();
 		refresh();
 	}
+
 	clear();
+	s_endgame();
 	mvprintw(t_height/2, t_width/2-4, " Game Over ");
 	mvprintw(t_height/2 + 1, t_width/2-9, "Press Any Key to Exit");
 	timeout(-1);
 	getch();
 	endwin();
-	printf("\n-----SNAKE GAME-----\n");
-	printf("Score: %d\n", score);
+	printf("-----SNAKE GAME-----\n");
+	printf("      Score: %d\n", score);
+	printf("--------------------\n");
 	exit(0);
-
-	
-
-
 }
 
 int main(int argc, char *argv[])

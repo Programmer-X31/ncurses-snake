@@ -65,7 +65,6 @@ void s_grow()
 
 void s_update()
 {
-	if(gameRunning) {
 		mvaddch(s_last.y, s_last.x, ' ');
 		for(int i = 0; i < s_size; i++) {
 			attron(COLOR_PAIR(2));
@@ -143,7 +142,12 @@ void s_update()
 			mvprintw(1, 3, "Score: %d", score);
 			f_pickLoc();
 		}
-	} 
+}
+
+
+void s_endgame()
+{
+	free(s_tail);
 }
 
 

@@ -1,6 +1,7 @@
 #ifndef __CHARACTER_H_
 #define __CHARACTER_H_
 #include <stdbool.h>
+#include <ncurses.h>
 
 struct pos {
 	int x;
@@ -25,4 +26,5 @@ void s_endgame();
 void f_pickLoc();
 struct pos f_getLoc();
 
+extern void rectangle(int y1, int x1, int y2, int x2);
 #endif

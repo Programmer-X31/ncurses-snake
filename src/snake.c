@@ -15,7 +15,6 @@
  * =====================================================================================
  */
 
-#include <ncurses.h>
 #include <stdlib.h>
 #include <locale.h>
 #include <unistd.h>
@@ -32,7 +31,7 @@ static char ch, s_mode = 'r';
 
 int score;
 
-bool includes(struct pos val, struct pos arr[], int len) {
+static bool includes(struct pos val, struct pos arr[], int len) {
     int i;
     for(i = 0; i < len-2; i++){
 		if(arr[i].x == val.x && arr[i].y == val.y)

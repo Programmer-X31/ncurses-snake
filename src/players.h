@@ -1,18 +1,17 @@
 #ifndef __CHARACTER_H_
 #define __CHARACTER_H_
-#include <stdbool.h>
 #include <ncurses.h>
+#include <stdbool.h>
 
 struct pos {
-	int x;
-	int y;
+    int x;
+    int y;
 };
 
-
-extern int score; // snake.c
+extern int score;        // snake.c
 extern struct pos f_pos; // food.c
-extern int t_width; // main.c
-extern int t_height; // main.c
+extern int t_width;      // main.c
+extern int t_height;     // main.c
 extern bool gameRunning; // main.c
 
 void s_init();

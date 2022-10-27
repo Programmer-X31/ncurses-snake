@@ -117,11 +117,11 @@ void s_update()
 		int x = s_head.x + s_xoff;
 		int y = s_head.y + s_yoff;
 
-		if(x > t_width) /* Right End */
+		if(x >= t_width) /* Right End */
 			s_head.x = 0;
 		else if (x < 0) /* Left Side */
 			s_head.x = t_width;
-		else if (y > t_height) /* Down Side */
+		else if (y >= t_height) /* Down Side */
 			s_head.y = 0;
 		else if (y < 0) /* Up side */
 			s_head.y = t_height;

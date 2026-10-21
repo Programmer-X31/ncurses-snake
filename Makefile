@@ -4,14 +4,6 @@ DEBUGGER = gdb
 
 # Compiler flags
 CFLAGS = -Wall -Wextra -g -Isrc
-
-# Production objects, excluding the game's main function.
-LIB_OBJECTS = $(filter-out $(BIN_DIR)/main.o,$(OBJECTS))
-
-# Convert tests/snake_test.c into bin/snake_test.test.o.
-TEST_OBJECTS = $(patsubst $(TEST_DIR)/%.c,$(BIN_DIR)/%.test.o,$(TESTS))
-
-# Test-specific compiler and linker flags.
 TESTFLAGS = -Wpedantic -fsanitize=address,undefined -DDEBUG
 
 # Linker libraries
@@ -22,45 +14,54 @@ SRC_DIR = src
 BIN_DIR = bin
 TEST_DIR = tests
 
-# Executable
+# Executables
 TARGET = $(BIN_DIR)/snake
 TEST_TARGET = $(BIN_DIR)/snake-test
 
-# Source and object files
+# Source, header, and object files
 SOURCES = $(wildcard $(SRC_DIR)/*.c)
+HEADERS = $(wildcard $(SRC_DIR)/*.h)
 OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(BIN_DIR)/%.o,$(SOURCES))
-TESTS = $(wildcard $(TEST_DIR)/*.c)
 
-# Default target
-.PHONY: all
+TESTS = $(wildcard $(TEST_DIR)/*.c)
+TEST_OBJECTS = $(patsubst $(TEST_DIR)/%.c,$(BIN_DIR)/%.test.o,$(TESTS))
+
+# Production objects, excluding main
+LIB_OBJECTS = $(filter-out $(BIN_DIR)/main.o,$(OBJECTS))
+
+# Debug versions of production objects for tests
+DEBUG_LIB_OBJECTS = $(patsubst $(BIN_DIR)/%.o,$(BIN_DIR)/%.debug.o,$(LIB_OBJECTS))
+
+.PHONY: all test clean
+
 all: $(TARGET)
 
-# Link object files
+# Normal executable
 $(TARGET): $(OBJECTS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
-# Compile source files
-$(BIN_DIR)/%.o: $(SRC_DIR)/%.c | $(BIN_DIR)
+# Normal production objects
+$(BIN_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# Test executable
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+$(TEST_TARGET): $(TEST_OBJECTS) $(DEBUG_LIB_OBJECTS) | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(TESTFLAGS) -o $@ $^ $(LDLIBS)
+
+# Compile test sources with DEBUG enabled
+$(BIN_DIR)/%.test.o: $(TEST_DIR)/%.c $(HEADERS) | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(TESTFLAGS) -c $< -o $@
+
+# Compile production modules with DEBUG enabled for tests
+$(BIN_DIR)/%.debug.o: $(SRC_DIR)/%.c $(HEADERS) | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(TESTFLAGS) -c $< -o $@
 
 # Create bin directory
 $(BIN_DIR):
 	mkdir -p $@
 
-
-.PHONY: test
-test: $(TEST_TARGET)
-	./$(TEST_TARGET)
-
-# Link test objects with production modules.
-$(TEST_TARGET): $(TEST_OBJECTS) $(LIB_OBJECTS) | $(BIN_DIR)
-	$(CC) $(CFLAGS) $(TESTFLAGS) -o $@ $^ $(LDLIBS)
-
-# Compile each test source into a separate object.
-$(BIN_DIR)/%.test.o: $(TEST_DIR)/%.c | $(BIN_DIR)
-	$(CC) $(CFLAGS) $(TESTFLAGS) -c $< -o $@
-
-# Clean build artifacts
-.PHONY: clean
 clean:
 	rm -rf $(BIN_DIR)

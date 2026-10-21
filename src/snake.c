@@ -6,9 +6,6 @@
 #define X_SPEED 1
 #define Y_SPEED 1
 
-#define ERR_ADDHEAD -1
-#define ERR_REMOVETAIL -1
-
 struct _node {
 	int x;
 	int y;
@@ -24,8 +21,10 @@ struct _snake {
 	int dx;
 	int dy;
 	enum Dir dir;
+#ifdef DEBUG
+	FILE *debug;
+#endif
 };
-
 
 /* Add a new node at the head of the snake based on the direction of the snake */
 int snake_addHead(Snake *s) {
@@ -69,8 +68,8 @@ int snake_addHead(Snake *s) {
 	return 0;
 }
 
+/* Remove the node at the tail of a snake */
 int snake_removeTail(Snake *s) {
-	// Remove the node at the tail of a snake
 	if (s == NULL || s->tail == NULL)
 		return ERR_REMOVETAIL;
 
@@ -88,8 +87,6 @@ int snake_removeTail(Snake *s) {
 	} else {
 		// Move the tail backward.
 		s->tail = tmp->prev;
-
-		// The new tail must not point to the removed node.
 		s->tail->next = NULL;
 
 		s->len--;
@@ -99,18 +96,38 @@ int snake_removeTail(Snake *s) {
 	return 0;
 }
 
+/* Initialise Snake pointer and set starting values for the snake */
 Snake *snake_init(WINDOW *win) {
-	Snake *s = (Snake *) malloc(sizeof(Snake));
+	Snake *s = malloc(sizeof *s);
 
 	if (s == NULL)
 		return NULL;
 
 	s->window = win;
+	s->head = NULL;
+	s->tail = NULL;
+	s->len = 0;
+
+	/* Set a valid initial direction before calling snake_setDir(). */
+	s->dir = RIGHT;
+	s->dx = 0;
+	s->dy = 0;
+
 	snake_setDir(s, RIGHT);
-	snake_addHead(s);
+
+	if (snake_addHead(s) != 0) {
+		free(s);
+		return NULL;
+	}
+
+#ifdef DEBUG
+	s->debug = fopen("debug.log", "a");
+#endif
+
 	return s;
 }
 
+/* snake_setDir - change direction of snake and prevent opposite direction movements */
 void snake_setDir(Snake *s, const enum Dir d) {
 	if (abs((d - s->dir)) == 2)
 		return;
@@ -135,32 +152,40 @@ void snake_setDir(Snake *s, const enum Dir d) {
 	s->dir = d;
 }
 
+/* Store the next location of the snake's head into the pointers given */
 void snake_nextLoc(Snake *s, int *y, int *x) {
+	if (x == NULL || y == NULL)
+		return;
 	*y = s->head->y + s->dy;
 	*x = s->head->x + s->dx;
 }
 
-void snake_grow(Snake *s) {
-	s->len++;
-	if (s->window != NULL)
-		// for (Node *tmp = s->head; tmp != NULL; tmp = tmp->next)
-		mvwprintw(s->window, s->tail->y, s->tail->x, "█");
-}
-int snake_getScore(Snake *s) { return s->len; }
+/* Get the snake's length */
+int snake_getLength(Snake *s) { return s->len; }
 
-void snake_move(Snake *s) {
-	// int len = s->len;
-	// Add a node to the head of the Snake (rear of the queue)
+
+/* Move the snake and draw it */
+int snake_move(Snake *s) {
+	int x, y;
+	int height, width;
+	getmaxyx(s->window, height, width);
+	snake_nextLoc(s, &y, &x);
+	if (y <= 0 || y >= height - 1 || x <= 0 || x >= width - 1)
+		return SNAKEONEDGE;
+
+	int len = s->len;
 	snake_addHead(s);
-	snake_printHead(s);
-
-	// Remove an element from the tail of the snake (front of the queue)
 	snake_removeTail(s);
-	snake_printTail(s);
+	s->len = len;
 
-	// s->len = len;
+#ifdef DEBUG
+	snake_printHead(s);
+	snake_printTail(s);
+#endif
+	return 0;
 }
 
+/* Delete Snake object */
 void snake_destroy(Snake *s) {
 	Node *cur = s->head;
 
@@ -173,33 +198,33 @@ void snake_destroy(Snake *s) {
 	s->head = NULL;
 	s->tail = NULL;
 	s->len = 0;
+#ifdef DEBUG
+	fclose(s->debug);
+#endif
+
 	free(s);
 }
 
+#ifdef DEBUG
 #include <time.h>
-FILE *fp;
-time_t now; // Fetches current epoch time
-void snake_printTail(Snake *s) {
-	now = time(NULL); // Fetches current epoch time
 
-	fp = fopen("debug.log", "a");
+void snake_printTail(Snake *s) {
+	time_t now = time(NULL); // Fetches current epoch time
+
 	if (s->tail == NULL) {
-		fprintf(fp, "[%ld]\tSnake %p\tTail = NULL\n", (long) now, s);
+		fprintf(s->debug, "[%ld]\tSnake %p\tTail = NULL\n", (long) now, s);
 		return;
 	}
 
-	fprintf(fp, "[%ld]\tSnake %p\tTail = { %d, %d }\n", (long) now, s, s->tail->x, s->tail->y);
-
-	fclose(fp);
+	fprintf(s->debug, "[%ld]\tSnake %p\tTail = { %d, %d }\n", (long) now, s, s->tail->x, s->tail->y);
 }
 void snake_printHead(Snake *s) {
-	fp = fopen("debug.log", "a");
-	now = time(NULL);
+	time_t now = time(NULL);
 	if (s->tail == NULL) {
-		fprintf(fp, "[%ld]\tSnake %p\tHead = NULL\n", (long) now, s);
+		fprintf(s->debug, "[%ld]\tSnake %p\tHead = NULL\n", (long) now, s);
 		return;
 	}
 
-	fprintf(fp, "[%ld]\tSnake %p\tHead = { %d, %d }\n", (long) now, s, s->head->x, s->head->y);
-	fclose(fp);
+	fprintf(s->debug, "[%ld]\tSnake %p\tHead = { %d, %d }\n", (long) now, s, s->head->x, s->head->y);
 }
+#endif

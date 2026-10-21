@@ -51,7 +51,6 @@ int main() {
 				case 'W':
 					snake_setDir(s, UP);
 					break;
-
 				case 'a':
 				case 'A':
 					snake_setDir(s, LEFT);
@@ -78,19 +77,21 @@ int main() {
 			food_randomLoc(f);
 			food_draw(f);
 		}
-		snake_move(s);
+		if (snake_move(s) == SNAKEONEDGE)
+			gameRunning = false;
 
-		mvwprintw(score_win, 2, 5, "Score: %d", snake_getScore(s));
-		// Update game logic / render frame
+		mvwprintw(score_win, 2, 5, "Score: %d", snake_getLength(s));
+
+		// Update game logic/render frame
 		usleep(80000);
-		refresh();
-		wrefresh(game_win);
-		wrefresh(score_win);
+		refresh(); // Refresh screen
+		wrefresh(game_win); // Refresh game window
+		wrefresh(score_win); // Refresh score window
 	}
-
 
 	timeout(-1);
 
+	// Cleanup code
 	snake_destroy(s);
 	food_destroy(f);
 	delwin(game_win);

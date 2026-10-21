@@ -19,10 +19,12 @@ int main() {
 	setlocale(LC_ALL, "");
 
 	initscr();
-	noecho();
+	noecho(); // Don't echo out the typed characters
 	curs_set(0);
+	cbreak(); // Line buffering disabled
 	timeout(1);
 	start_color();
+	keypad(stdscr, TRUE);
 	init_pair(1, COLOR_GREEN, COLOR_BLACK);
 	init_pair(2, COLOR_WHITE, COLOR_BLACK);
 
@@ -49,22 +51,28 @@ int main() {
 			switch (ch) {
 				case 'w':
 				case 'W':
+				case KEY_UP:
+
 					snake_setDir(s, UP);
 					break;
 				case 'a':
 				case 'A':
+				case KEY_LEFT:
+
 					snake_setDir(s, LEFT);
 					break;
 				case 's':
 				case 'S':
+				case KEY_DOWN:
 					snake_setDir(s, DOWN);
 					break;
 				case 'd':
 				case 'D':
+				case KEY_RIGHT:
 					snake_setDir(s, RIGHT);
 					break;
-				case 'q':
-				case 'Q':
+				case 'x':
+				case 'X':
 					gameRunning = false;
 					break;
 			}

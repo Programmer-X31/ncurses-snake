@@ -1,136 +1,205 @@
-/*
- * =====================================================================================
- *
- *       Filename:  snake.c
- *
- *    Description:  Implentation of Snake Clsass
- *
- *        Version:  1.0
- *        Created:  10/15/2022 16:44
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  Sachin Murali (), sachinsamurai@gmail.com
- *
- * =====================================================================================
- */
-
-#include "players.h"
-#include <locale.h>
+#include "snake.h"
+#include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-static struct pos s_head = {10, 5};
-static struct pos s_last;
+#define X_SPEED 1
+#define Y_SPEED 1
 
-static struct pos *s_tail;
-static int s_size = 1;
+#define ERR_ADDHEAD -1
+#define ERR_REMOVETAIL -1
 
-static int s_xoff, s_yoff;
-static char ch, s_mode = 'r';
+struct _node {
+	int x;
+	int y;
+	struct _node *prev;
+	struct _node *next;
+};
 
-int score;
+struct _snake {
+	WINDOW *window;
+	Node *head;
+	Node *tail;
+	unsigned int len;
+	int dx;
+	int dy;
+	enum Dir dir;
+};
 
-static bool includes(struct pos val, struct pos arr[], int len) {
-    int i;
-    for (i = 0; i < len - 2; i++) {
-        if (arr[i].x == val.x && arr[i].y == val.y)
-            return true;
-    }
-    return false;
+
+/* Add a new node at the head of the snake based on the direction of the snake */
+int snake_addHead(Snake *s) {
+	if (s == NULL)
+		return ERR_ADDHEAD;
+
+	Node *newhead = (Node *) malloc(sizeof(Node));
+	if (newhead == NULL)
+		return ERR_ADDHEAD;
+
+	if (s->head == NULL) {
+		int winwidth, winheight;
+		int begx, begy;
+		getmaxyx(s->window, winheight, winwidth);
+		getbegyx(s->window, begy, begx);
+		newhead->x = begx + (winwidth / 2);
+		newhead->y = begy + (winheight / 2);
+
+		newhead->prev = NULL;
+		newhead->next = NULL;
+
+		s->head = newhead;
+		s->tail = newhead;
+		s->len = 1;
+
+	} else {
+		Node *oldhead = s->head;
+		newhead->x = oldhead->x + s->dx;
+		newhead->y = oldhead->y + s->dy;
+
+		newhead->prev = NULL;
+		newhead->next = oldhead;
+		oldhead->prev = newhead;
+
+		s->head = newhead;
+		s->len++;
+	}
+	if (s->window != NULL)
+		mvwprintw(s->window, newhead->y, newhead->x, "█");
+
+	return 0;
 }
 
-void s_init() {
-    s_tail = calloc(s_size, sizeof(struct pos));
-    s_setDir(1, 0);
-    s_mode = 'r';
-    s_update();
+int snake_removeTail(Snake *s) {
+	// Remove the node at the tail of a snake
+	if (s == NULL || s->tail == NULL)
+		return ERR_REMOVETAIL;
 
-    mvprintw(1, 3, "Score: %d", score);
+	Node *tmp = s->tail;
+
+	// Erase the tail from the ncurses window.
+	if (s->window != NULL)
+		mvwprintw(s->window, tmp->y, tmp->x, " ");
+
+	if (s->head == s->tail) {
+		// Only one node exists.
+		s->head = NULL;
+		s->tail = NULL;
+		s->len = 0;
+	} else {
+		// Move the tail backward.
+		s->tail = tmp->prev;
+
+		// The new tail must not point to the removed node.
+		s->tail->next = NULL;
+
+		s->len--;
+	}
+
+	free(tmp);
+	return 0;
 }
 
-void s_setDir(int xoff, int yoff) {
-    s_xoff = xoff;
-    s_yoff = yoff;
+Snake *snake_init(WINDOW *win) {
+	Snake *s = (Snake *) malloc(sizeof(Snake));
+
+	if (s == NULL)
+		return NULL;
+
+	s->window = win;
+	snake_setDir(s, RIGHT);
+	snake_addHead(s);
+	return s;
 }
 
-void s_grow() {
-    s_size++;
-    s_tail = realloc(s_tail, sizeof(struct pos) * s_size);
+void snake_setDir(Snake *s, const enum Dir d) {
+	if (abs((d - s->dir)) == 2)
+		return;
+	switch (d) {
+		case UP:
+			s->dx = 0;
+			s->dy = -Y_SPEED;
+			break;
+		case DOWN:
+			s->dx = 0;
+			s->dy = Y_SPEED;
+			break;
+		case LEFT:
+			s->dx = -X_SPEED;
+			s->dy = 0;
+			break;
+		case RIGHT:
+			s->dx = X_SPEED;
+			s->dy = 0;
+			break;
+	}
+	s->dir = d;
 }
 
-void s_update() {
-    mvaddch(s_last.y, s_last.x, ' ');
-    for (int i = 0; i < s_size; i++) {
-        attron(COLOR_PAIR(2));
-        mvprintw(s_tail[i].y, s_tail[i].x, "█");
-    }
-
-    ch = getch();
-
-    switch (ch) {
-    case 'w':
-        if (s_mode != 'b') {
-            s_setDir(0, -1);
-            s_mode = 'f';
-        }
-        break;
-    case 'a':
-        if (s_mode != 'r') {
-            s_setDir(-1, 0);
-            s_mode = 'l';
-        }
-        break;
-    case 's':
-        if (s_mode != 'f') {
-            s_setDir(0, 1);
-            s_mode = 'b';
-        }
-        break;
-    case 'd':
-        if (s_mode != 'l') {
-            s_setDir(1, 0);
-            s_mode = 'r';
-        }
-        break;
-    case 'x':
-        gameRunning = false;
-        break;
-    }
-
-    // Movement Code
-    s_last = s_tail[0];
-
-    for (int i = 0; i < s_size - 1; i++)
-        s_tail[i] = s_tail[i + 1];
-    s_tail[s_size - 1] = s_head;
-
-    int x = s_head.x + s_xoff;
-    int y = s_head.y + s_yoff;
-
-    if (x >= t_width) /* Right End */
-        s_head.x = 0;
-    else if (x < 0) /* Left Side */
-        s_head.x = t_width;
-    else if (y >= t_height) /* Down Side */
-        s_head.y = 0;
-    else if (y < 0) /* Up side */
-        s_head.y = t_height;
-    else {
-        if (!includes(s_head, s_tail, s_size)) {
-            s_head.x = x;
-            s_head.y = y;
-        } else {
-            gameRunning = false;
-        }
-    }
-
-    if (s_head.x == f_pos.x && s_head.y == f_pos.y) {
-        s_grow();
-        ++score;
-        mvprintw(1, 3, "Score: %d", score);
-        f_pickLoc();
-    }
+void snake_nextLoc(Snake *s, int *y, int *x) {
+	*y = s->head->y + s->dy;
+	*x = s->head->x + s->dx;
 }
 
-void s_endgame() { free(s_tail); }
+void snake_grow(Snake *s) {
+	s->len++;
+	if (s->window != NULL)
+		// for (Node *tmp = s->head; tmp != NULL; tmp = tmp->next)
+		mvwprintw(s->window, s->tail->y, s->tail->x, "█");
+}
+int snake_getScore(Snake *s) { return s->len; }
+
+void snake_move(Snake *s) {
+	// int len = s->len;
+	// Add a node to the head of the Snake (rear of the queue)
+	snake_addHead(s);
+	snake_printHead(s);
+
+	// Remove an element from the tail of the snake (front of the queue)
+	snake_removeTail(s);
+	snake_printTail(s);
+
+	// s->len = len;
+}
+
+void snake_destroy(Snake *s) {
+	Node *cur = s->head;
+
+	while (cur != NULL) {
+		Node *next = cur->next;
+		free(cur);
+		cur = next;
+	}
+
+	s->head = NULL;
+	s->tail = NULL;
+	s->len = 0;
+	free(s);
+}
+
+#include <time.h>
+FILE *fp;
+time_t now; // Fetches current epoch time
+void snake_printTail(Snake *s) {
+	now = time(NULL); // Fetches current epoch time
+
+	fp = fopen("debug.log", "a");
+	if (s->tail == NULL) {
+		fprintf(fp, "[%ld]\tSnake %p\tTail = NULL\n", (long) now, s);
+		return;
+	}
+
+	fprintf(fp, "[%ld]\tSnake %p\tTail = { %d, %d }\n", (long) now, s, s->tail->x, s->tail->y);
+
+	fclose(fp);
+}
+void snake_printHead(Snake *s) {
+	fp = fopen("debug.log", "a");
+	now = time(NULL);
+	if (s->tail == NULL) {
+		fprintf(fp, "[%ld]\tSnake %p\tHead = NULL\n", (long) now, s);
+		return;
+	}
+
+	fprintf(fp, "[%ld]\tSnake %p\tHead = { %d, %d }\n", (long) now, s, s->head->x, s->head->y);
+	fclose(fp);
+}

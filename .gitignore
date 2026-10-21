@@ -1,2 +1,6 @@
 bin/
-
+build/
+.clang-format
+debug.log
+.idea/
+.vscode/

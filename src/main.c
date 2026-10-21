@@ -1,69 +1,100 @@
-#include "players.h"
 #include <locale.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include "food.h"
+#include "snake.h"
 
-int t_width;
-int t_height;
-bool gameRunning;
+static bool gameRunning;
 
-void rectangle(int y1, int x1, int y2, int x2) {
-    mvhline(y1, x1, 0, x2 - x1);
-    mvhline(y2, x1, 0, x2 - x1);
-    mvvline(y1, x1, 0, y2 - y1);
-    mvvline(y1, x2, 0, y2 - y1);
-    mvaddch(y1, x1, ACS_ULCORNER);
-    mvaddch(y2, x1, ACS_LLCORNER);
-    mvaddch(y1, x2, ACS_URCORNER);
-    mvaddch(y2, x2, ACS_LRCORNER);
-}
+#define GAMEWIN_HEIGHT 31
+#define GAMEWIN_WIDTH 101
 
-void init_game() {
-    getmaxyx(curscr, t_height, t_width);
-    gameRunning = true;
+#define SCOREWIN_HEIGHT 5
+#define SCOREWIN_WIDTH 35
 
-    s_init();
-    f_pickLoc();
-}
+int main() {
+	gameRunning = true;
 
-void draw() {
-    while (gameRunning) {
-        usleep(75000);
-        s_update();
-        refresh();
-    }
+	setlocale(LC_ALL, "");
 
-    clear();
-    s_endgame();
+	initscr();
+	noecho();
+	curs_set(0);
+	timeout(1);
+	start_color();
+	init_pair(1, COLOR_GREEN, COLOR_BLACK);
+	init_pair(2, COLOR_WHITE, COLOR_BLACK);
 
-    rectangle(t_height / 2 - 2, t_width / 2 - 13, t_height / 2 + 5,
-              t_width / 2 + 15);
-    mvprintw(t_height / 2, t_width / 2 - 3, "Game Over");
-    mvprintw(t_height / 2 + 1, t_width / 2 - 2, "Score:%d", score);
-    mvprintw(t_height / 2 + 3, t_width / 2 - 9, "Press Any Key to Exit");
-    timeout(-1);
-    getch();
-    endwin();
-    printf("-----SNAKE GAME-----\n");
-    printf("      Score: %d\n", score);
-    printf("--------------------\n");
-    exit(0);
-}
+	WINDOW *game_win = newwin(GAMEWIN_HEIGHT, GAMEWIN_WIDTH, 1, 5);
+	WINDOW *score_win = newwin(SCOREWIN_HEIGHT, SCOREWIN_WIDTH, GAMEWIN_HEIGHT + 4, 5 + (GAMEWIN_WIDTH / 2) - 35 / 2);
 
-int main(int argc, char *argv[]) {
-    setlocale(LC_ALL, "");
+	if (game_win == NULL) {
+		endwin();
+		return 1;
+	}
+	box(game_win, 0, 0);
+	box(score_win, 0, 0);
 
-    initscr();
-    noecho();
-    curs_set(0);
-    timeout(1);
-    start_color();
-    init_pair(1, COLOR_GREEN, COLOR_BLACK);
-    init_pair(2, COLOR_WHITE, COLOR_BLACK);
+	Snake *s = snake_init(game_win);
+	Food *f = food_init(game_win);
+	int ch;
+	int snake_x, snake_y;
+	int food_x, food_y;
 
-    init_game();
-    draw();
+	food_draw(f);
 
-    endwin();
+	while (gameRunning) {
+		if ((ch = getch()) != ERR) {
+			switch (ch) {
+				case 'w':
+				case 'W':
+					snake_setDir(s, UP);
+					break;
+
+				case 'a':
+				case 'A':
+					snake_setDir(s, LEFT);
+					break;
+				case 's':
+				case 'S':
+					snake_setDir(s, DOWN);
+					break;
+				case 'd':
+				case 'D':
+					snake_setDir(s, RIGHT);
+					break;
+				case 'q':
+				case 'Q':
+					gameRunning = false;
+					break;
+			}
+		}
+
+		snake_nextLoc(s, &snake_y, &snake_x);
+		food_loc(f, &food_y, &food_x);
+		if (snake_x == food_x && snake_y == food_y) {
+			snake_addHead(s);
+			food_randomLoc(f);
+			food_draw(f);
+		}
+		snake_move(s);
+
+		mvwprintw(score_win, 2, 5, "Score: %d", snake_getScore(s));
+		// Update game logic / render frame
+		usleep(80000);
+		refresh();
+		wrefresh(game_win);
+		wrefresh(score_win);
+	}
+
+
+	timeout(-1);
+
+	snake_destroy(s);
+	food_destroy(f);
+	delwin(game_win);
+	delwin(score_win);
+	endwin();
+	exit(0);
 }
